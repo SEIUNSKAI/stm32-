@@ -1,7 +1,7 @@
 #include "stm32f10x.h"  
 #include "Delay.h"
 #include "OLED.h"
-#include "CountSensor.h"
+
 
 int main(void)
 {
@@ -17,3 +17,4 @@ int main(void)
 		}
 			
 }
+// gittest
