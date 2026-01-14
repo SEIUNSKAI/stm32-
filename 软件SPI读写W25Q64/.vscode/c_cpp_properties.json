@@ -3,11 +3,11 @@
         {
             "name": "Target 1",
             "includePath": [
-                "d:\\Keil5\\工程\\工程模板\\start",
-                "d:\\Keil5\\工程\\工程模板\\User",
-                "d:\\Keil5\\工程\\工程模板\\Library",
-                "d:\\Keil5\\工程\\工程模板\\System",
-                "d:\\Keil5\\工程\\工程模板\\Hardware",
+                "d:\\Keil5\\工程\\软件SPI读写W25Q64\\start",
+                "d:\\Keil5\\工程\\软件SPI读写W25Q64\\User",
+                "d:\\Keil5\\工程\\软件SPI读写W25Q64\\Library",
+                "d:\\Keil5\\工程\\软件SPI读写W25Q64\\System",
+                "d:\\Keil5\\工程\\软件SPI读写W25Q64\\Hardware",
                 "D:\\Keil5\\ARM\\ARMCC\\include",
                 "D:\\Keil5\\ARM\\ARMCC\\include\\rw"
             ],

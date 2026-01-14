@@ -28,10 +28,9 @@
 ".\objects\main.o"
 ".\objects\stm32f10x_it.o"
 ".\objects\delay.o"
-".\objects\buzzer.o"
-".\objects\lsensor.o"
 ".\objects\oled.o"
-".\objects\countsensor.o"
+".\objects\myspi.o"
+".\objects\w25q64.o"
 --strict --scatter ".\Objects\stm32.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers

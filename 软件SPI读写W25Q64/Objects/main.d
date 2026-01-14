@@ -30,4 +30,5 @@
 .\objects\main.o: .\Library\misc.h
 .\objects\main.o: .\System\Delay.h
 .\objects\main.o: .\Hardware\OLED.h
-.\objects\main.o: .\Hardware\CountSensor.h
+.\objects\main.o: .\Hardware\MySPI.h
+.\objects\main.o: .\Hardware\W25Q64.h

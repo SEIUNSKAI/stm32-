@@ -1,5 +1,5 @@
-L 1 "User\main.c"
-N#include "stm32f10x.h"  
+L 1 "Hardware\MySPI.c"
+N#include "stm32f10x.h"
 L 1 ".\start\stm32f10x.h" 1
 N/**
 N  ******************************************************************************
@@ -28854,101 +28854,76 @@ N  * @}
 N  */
 N
 N/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
-L 2 "User\main.c" 2
-N#include "Delay.h"
-L 1 ".\System\Delay.h" 1
-N#ifndef __DELAY_H
-N#define __DELAY_H
+L 2 "Hardware\MySPI.c" 2
 N
-Nvoid Delay_us(uint32_t us);
-Nvoid Delay_ms(uint32_t ms);
-Nvoid Delay_s(uint32_t s);
 N
-N#endif
-L 3 "User\main.c" 2
-N#include "OLED.h"
-L 1 ".\Hardware\OLED.h" 1
-N#ifndef __OLED_H
-N#define __OLED_H
-N
-Nvoid OLED_Init(void);
-Nvoid OLED_Clear(void);
-Nvoid OLED_ShowChar(uint8_t Line, uint8_t Column, char Char);
-Nvoid OLED_ShowString(uint8_t Line, uint8_t Column, char *String);
-Nvoid OLED_ShowNum(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Length);
-Nvoid OLED_ShowSignedNum(uint8_t Line, uint8_t Column, int32_t Number, uint8_t Length);
-Nvoid OLED_ShowHexNum(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Length);
-Nvoid OLED_ShowBinNum(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Length);
-N
-N#endif
-L 4 "User\main.c" 2
-N#include "MySPI.h"
-L 1 ".\Hardware\MySPI.h" 1
-N#ifndef __MYSPI_H
-N#define __MYSPI_H
-N#include <stdint.h>
-N
-Nvoid MySPI_Init(void);
-Nvoid SPI_Start(void);
-Nvoid SPI_Stop(void);
-Nuint8_t MySPI_SwapByte(uint8_t ByteSend);
-N
-N#endif
-L 5 "User\main.c" 2
-N#include "W25Q64.h"
-L 1 ".\Hardware\W25Q64.h" 1
-N#ifndef __W25Q64_H
-N#define __W25Q64_H
-N#include <stdint.h>
-N
-Nvoid W25Q64_Init(void);
-Nvoid W25Q64_ReadID(uint8_t *MID, uint16_t *DID);
-Nvoid W25Q64_ENABLE(void);
-Nvoid W25Q64_WaitBusy(void);
-Nvoid W25Q64_PageProgram(uint32_t Address, uint8_t *DataArray, uint16_t count);
-Nvoid W25Q64_SectorErase(uint32_t Address);
-Nvoid W25Q64_ReadData(uint32_t Address, uint8_t *DataArray, uint32_t Count);
-N
-N#endif
-L 6 "User\main.c" 2
-N
-Nuint8_t MID;
-Nuint16_t DID;
-N
-Nuint8_t ArrayWrite[] = {0x01, 0x02, 0x03, 0x04};
-Nuint8_t ArrayRead[4];
-N
-Nint main(void)
+Nvoid MySPI_W_SS(uint8_t BitValue)
 N{
-N	OLED_Init();
-N	W25Q64_Init();
+N    GPIO_WriteBit(GPIOA, GPIO_Pin_4, (BitAction)BitValue);
+X    GPIO_WriteBit(((GPIO_TypeDef *) ((((uint32_t)0x40000000) + 0x10000) + 0x0800)), ((uint16_t)0x0010), (BitAction)BitValue);
+N}
+N
+Nvoid MySPI_W_SCK(uint8_t BitValue)
+N{
+N    GPIO_WriteBit(GPIOA, GPIO_Pin_5, (BitAction)BitValue);
+X    GPIO_WriteBit(((GPIO_TypeDef *) ((((uint32_t)0x40000000) + 0x10000) + 0x0800)), ((uint16_t)0x0020), (BitAction)BitValue);
+N}
+N
+Nvoid MySPI_W_MOSI(uint8_t BitValue)
+N{
+N    GPIO_WriteBit(GPIOA, GPIO_Pin_7, (BitAction)BitValue);
+X    GPIO_WriteBit(((GPIO_TypeDef *) ((((uint32_t)0x40000000) + 0x10000) + 0x0800)), ((uint16_t)0x0080), (BitAction)BitValue);
+N}
+N
+Nuint8_t MySPI_R_MISO(void)
+N{
+N    return GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_6);
+X    return GPIO_ReadInputDataBit(((GPIO_TypeDef *) ((((uint32_t)0x40000000) + 0x10000) + 0x0800)), ((uint16_t)0x0040));
+N}
+N
+Nvoid MySPI_Init(void)
+N{
+N    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+X    RCC_APB2PeriphClockCmd(((uint32_t)0x00000004), ENABLE);
 N	
-N	OLED_ShowString(1, 1, "MID:   DID:");
-N	OLED_ShowString(2, 1, "W:");
-N	OLED_ShowString(3, 1, "R:");
-N	
-N	W25Q64_ReadID(&MID, &DID);
-N	OLED_ShowHexNum(1, 5, MID, 2);
-N	OLED_ShowHexNum(1, 12, DID, 4);
-N	
-N	W25Q64_SectorErase(0x000000);
-N	W25Q64_PageProgram(0x000000, ArrayWrite, 4);
-N	
-N	W25Q64_ReadData(0x000000, ArrayRead, 4);
-N	
-N	OLED_ShowHexNum(2, 3, ArrayWrite[0], 2);
-N	OLED_ShowHexNum(2, 6, ArrayWrite[1], 2);
-N	OLED_ShowHexNum(2, 9, ArrayWrite[2], 2);
-N	OLED_ShowHexNum(2, 12, ArrayWrite[3], 2);
-N	
-N	OLED_ShowHexNum(3, 3, ArrayRead[0], 2);
-N	OLED_ShowHexNum(3, 6, ArrayRead[1], 2);
-N	OLED_ShowHexNum(3, 9, ArrayRead[2], 2);
-N	OLED_ShowHexNum(3, 12, ArrayRead[3], 2);
-N	
-N	while (1)
-N	{
-N		
-N	}
+N	GPIO_InitTypeDef GPIO_InitStructure;
+N 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+N	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+N	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_7;
+X	GPIO_InitStructure.GPIO_Pin = ((uint16_t)0x0010) | ((uint16_t)0x0020) | ((uint16_t)0x0080);
+N 	GPIO_Init(GPIOA, &GPIO_InitStructure);
+X 	GPIO_Init(((GPIO_TypeDef *) ((((uint32_t)0x40000000) + 0x10000) + 0x0800)), &GPIO_InitStructure);
+N	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+N	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+N	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
+X	GPIO_InitStructure.GPIO_Pin = ((uint16_t)0x0040);
+N 	GPIO_Init(GPIOA, &GPIO_InitStructure);
+X 	GPIO_Init(((GPIO_TypeDef *) ((((uint32_t)0x40000000) + 0x10000) + 0x0800)), &GPIO_InitStructure);
+N
+N    MySPI_W_SS(1);
+N    MySPI_W_SCK(0);
+N}
+N
+Nvoid SPI_Start(void)
+N{
+N    MySPI_W_SS(0);
+N}
+N
+Nvoid SPI_Stop(void)
+N{
+N    MySPI_W_SS(1);
+N}
+N
+Nuint8_t MySPI_SwapByte(uint8_t ByteSend)
+N{
+N    uint8_t i, ByteReceive = 0x00;
+N    for(i = 0; i < 8; i ++)
+N    {
+N        MySPI_W_MOSI(ByteSend & (0x80 >> i));
+N        MySPI_W_SCK(1);
+N        if(MySPI_R_MISO() == 1){ByteReceive |= (0x80 >> i);}
+N        MySPI_W_SCK(0);            
+N    }
+N    return ByteReceive;
 N}
 N

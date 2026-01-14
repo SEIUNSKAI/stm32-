@@ -1,4 +1,4 @@
-#line 1 "User\\main.c"
+#line 1 "Hardware\\W25Q64.c"
 #line 1 ".\\start\\stm32f10x.h"
 
 
@@ -13337,89 +13337,111 @@ void SysTick_CLKSourceConfig(uint32_t SysTick_CLKSource);
  
 
  
-#line 2 "User\\main.c"
-#line 1 ".\\System\\Delay.h"
-
-
-
-void Delay_us(uint32_t us);
-void Delay_ms(uint32_t ms);
-void Delay_s(uint32_t s);
-
-#line 3 "User\\main.c"
-#line 1 ".\\Hardware\\OLED.h"
-
-
-
-void OLED_Init(void);
-void OLED_Clear(void);
-void OLED_ShowChar(uint8_t Line, uint8_t Column, char Char);
-void OLED_ShowString(uint8_t Line, uint8_t Column, char *String);
-void OLED_ShowNum(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Length);
-void OLED_ShowSignedNum(uint8_t Line, uint8_t Column, int32_t Number, uint8_t Length);
-void OLED_ShowHexNum(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Length);
-void OLED_ShowBinNum(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Length);
-
-#line 4 "User\\main.c"
-#line 1 ".\\Hardware\\MySPI.h"
-#line 4 ".\\Hardware\\MySPI.h"
+#line 2 "Hardware\\W25Q64.c"
+#line 1 "Hardware\\MySPI.h"
+#line 4 "Hardware\\MySPI.h"
 
 void MySPI_Init(void);
 void SPI_Start(void);
 void SPI_Stop(void);
 uint8_t MySPI_SwapByte(uint8_t ByteSend);
 
-#line 5 "User\\main.c"
-#line 1 ".\\Hardware\\W25Q64.h"
-#line 4 ".\\Hardware\\W25Q64.h"
+#line 3 "Hardware\\W25Q64.c"
+#line 1 "Hardware\\W25Q64_Ins.h"
 
-void W25Q64_Init(void);
-void W25Q64_ReadID(uint8_t *MID, uint16_t *DID);
-void W25Q64_ENABLE(void);
-void W25Q64_WaitBusy(void);
-void W25Q64_PageProgram(uint32_t Address, uint8_t *DataArray, uint16_t count);
-void W25Q64_SectorErase(uint32_t Address);
-void W25Q64_ReadData(uint32_t Address, uint8_t *DataArray, uint32_t Count);
 
-#line 6 "User\\main.c"
 
-uint8_t MID;
-uint16_t DID;
+#line 31 "Hardware\\W25Q64_Ins.h"
 
-uint8_t ArrayWrite[] = {0x01, 0x02, 0x03, 0x04};
-uint8_t ArrayRead[4];
 
-int main(void)
+
+#line 4 "Hardware\\W25Q64.c"
+
+
+void W25Q64_Init(void)
 {
-	OLED_Init();
-	W25Q64_Init();
-	
-	OLED_ShowString(1, 1, "MID:   DID:");
-	OLED_ShowString(2, 1, "W:");
-	OLED_ShowString(3, 1, "R:");
-	
-	W25Q64_ReadID(&MID, &DID);
-	OLED_ShowHexNum(1, 5, MID, 2);
-	OLED_ShowHexNum(1, 12, DID, 4);
-	
-	W25Q64_SectorErase(0x000000);
-	W25Q64_PageProgram(0x000000, ArrayWrite, 4);
-	
-	W25Q64_ReadData(0x000000, ArrayRead, 4);
-	
-	OLED_ShowHexNum(2, 3, ArrayWrite[0], 2);
-	OLED_ShowHexNum(2, 6, ArrayWrite[1], 2);
-	OLED_ShowHexNum(2, 9, ArrayWrite[2], 2);
-	OLED_ShowHexNum(2, 12, ArrayWrite[3], 2);
-	
-	OLED_ShowHexNum(3, 3, ArrayRead[0], 2);
-	OLED_ShowHexNum(3, 6, ArrayRead[1], 2);
-	OLED_ShowHexNum(3, 9, ArrayRead[2], 2);
-	OLED_ShowHexNum(3, 12, ArrayRead[3], 2);
-	
-	while (1)
-	{
-		
-	}
+    MySPI_Init();
 }
 
+void W25Q64_ReadID(uint8_t *MID, uint16_t *DID)
+{
+    SPI_Start();
+    MySPI_SwapByte(0x9F);
+    *MID = MySPI_SwapByte(0xFF);
+    *DID = MySPI_SwapByte(0xFF);
+    *DID <<= 8;
+    *DID |= MySPI_SwapByte(0xFF);
+    SPI_Stop();
+}
+
+void W25Q64_ENABLE(void)
+{
+    SPI_Start();
+    MySPI_SwapByte( 0x06);
+    SPI_Stop();
+}
+
+void W25Q64_WaitBusy(void)
+{
+    uint32_t Timeout;
+    SPI_Start();
+    MySPI_SwapByte(0x05);
+    Timeout = 100000;
+    while ((MySPI_SwapByte(0xFF) & 0x01) == 0x01)
+    {
+        Timeout --;
+        if (Timeout == 0)
+        {
+            break;
+        }
+    }
+    SPI_Stop();
+}
+
+void W25Q64_PageProgram(uint32_t Address, uint8_t *DataArray, uint16_t count)
+{   
+    uint16_t i;
+    W25Q64_ENABLE();
+
+    SPI_Start();
+    MySPI_SwapByte(0x02);
+    MySPI_SwapByte(Address >> 16);
+    MySPI_SwapByte(Address >> 8);
+    MySPI_SwapByte(Address);
+    for (i = 0; i < count; i ++)
+    {
+        MySPI_SwapByte(DataArray[i]);
+    }
+    SPI_Stop();
+
+    W25Q64_WaitBusy();
+}
+
+void W25Q64_SectorErase(uint32_t Address)
+{
+	W25Q64_ENABLE();
+	
+	SPI_Start();
+	MySPI_SwapByte(0x20);
+	MySPI_SwapByte(Address >> 16);
+	MySPI_SwapByte(Address >> 8);
+	MySPI_SwapByte(Address);
+	SPI_Stop();
+	
+	W25Q64_WaitBusy();
+}
+
+void W25Q64_ReadData(uint32_t Address, uint8_t *DataArray, uint32_t Count)
+{
+	uint32_t i;
+	SPI_Start();
+	MySPI_SwapByte(0x03);
+	MySPI_SwapByte(Address >> 16);
+	MySPI_SwapByte(Address >> 8);
+	MySPI_SwapByte(Address);
+	for (i = 0; i < Count; i ++)
+	{
+		DataArray[i] = MySPI_SwapByte(0xFF);
+	}
+	SPI_Stop();
+}

@@ -5,43 +5,161 @@
                           AREA ||i.main||, CODE, READONLY, ALIGN=2
 
                   main PROC
-;;;5      
-;;;6      int main(void)
+;;;12     
+;;;13     int main(void)
 000000  f7fffffe          BL       OLED_Init
-;;;7      {
-;;;8      	
-;;;9      	OLED_Init();
-;;;10     	Countsensor_Init();
-000004  f7fffffe          BL       Countsensor_Init
-;;;11     	OLED_ShowString(1, 1, "Count:");
-000008  a207              ADR      r2,|L1.40|
+;;;14     {
+;;;15     	OLED_Init();
+;;;16     	W25Q64_Init();
+000004  f7fffffe          BL       W25Q64_Init
+;;;17     	
+;;;18     	OLED_ShowString(1, 1, "MID:   DID:");
+000008  a233              ADR      r2,|L1.216|
 00000a  2101              MOVS     r1,#1
 00000c  4608              MOV      r0,r1
 00000e  f7fffffe          BL       OLED_ShowString
-;;;12     	
-;;;13     	
-;;;14     	while (1)
-000012  e008              B        |L1.38|
-                  |L1.20|
-;;;15     		{
-;;;16     			OLED_ShowNum(1, 7, getcount(), 5);
-000014  f7fffffe          BL       getcount
-000018  4604              MOV      r4,r0
-00001a  2305              MOVS     r3,#5
-00001c  4622              MOV      r2,r4
-00001e  2107              MOVS     r1,#7
-000020  2001              MOVS     r0,#1
-000022  f7fffffe          BL       OLED_ShowNum
-                  |L1.38|
-000026  e7f5              B        |L1.20|
-;;;17     		}
-;;;18     			
-;;;19     }
+;;;19     	OLED_ShowString(2, 1, "W:");
+000012  a234              ADR      r2,|L1.228|
+000014  2101              MOVS     r1,#1
+000016  2002              MOVS     r0,#2
+000018  f7fffffe          BL       OLED_ShowString
+;;;20     	OLED_ShowString(3, 1, "R:");
+00001c  a232              ADR      r2,|L1.232|
+00001e  2101              MOVS     r1,#1
+000020  2003              MOVS     r0,#3
+000022  f7fffffe          BL       OLED_ShowString
+;;;21     	
+;;;22     	W25Q64_ReadID(&MID, &DID);
+000026  4931              LDR      r1,|L1.236|
+000028  4831              LDR      r0,|L1.240|
+00002a  f7fffffe          BL       W25Q64_ReadID
+;;;23     	OLED_ShowHexNum(1, 5, MID, 2);
+00002e  2302              MOVS     r3,#2
+000030  482f              LDR      r0,|L1.240|
+000032  7802              LDRB     r2,[r0,#0]  ; MID
+000034  2105              MOVS     r1,#5
+000036  2001              MOVS     r0,#1
+000038  f7fffffe          BL       OLED_ShowHexNum
+;;;24     	OLED_ShowHexNum(1, 12, DID, 4);
+00003c  2304              MOVS     r3,#4
+00003e  482b              LDR      r0,|L1.236|
+000040  8802              LDRH     r2,[r0,#0]  ; DID
+000042  210c              MOVS     r1,#0xc
+000044  2001              MOVS     r0,#1
+000046  f7fffffe          BL       OLED_ShowHexNum
+;;;25     	
+;;;26     	W25Q64_SectorErase(0x000000);
+00004a  2000              MOVS     r0,#0
+00004c  f7fffffe          BL       W25Q64_SectorErase
+;;;27     	W25Q64_PageProgram(0x000000, ArrayWrite, 4);
+000050  2204              MOVS     r2,#4
+000052  4928              LDR      r1,|L1.244|
+000054  2000              MOVS     r0,#0
+000056  f7fffffe          BL       W25Q64_PageProgram
+;;;28     	
+;;;29     	W25Q64_ReadData(0x000000, ArrayRead, 4);
+00005a  2204              MOVS     r2,#4
+00005c  4926              LDR      r1,|L1.248|
+00005e  2000              MOVS     r0,#0
+000060  f7fffffe          BL       W25Q64_ReadData
+;;;30     	
+;;;31     	OLED_ShowHexNum(2, 3, ArrayWrite[0], 2);
+000064  4823              LDR      r0,|L1.244|
+000066  7802              LDRB     r2,[r0,#0]  ; ArrayWrite
+000068  2302              MOVS     r3,#2
+00006a  2103              MOVS     r1,#3
+00006c  4618              MOV      r0,r3
+00006e  f7fffffe          BL       OLED_ShowHexNum
+;;;32     	OLED_ShowHexNum(2, 6, ArrayWrite[1], 2);
+000072  4820              LDR      r0,|L1.244|
+000074  7842              LDRB     r2,[r0,#1]  ; ArrayWrite
+000076  2302              MOVS     r3,#2
+000078  2106              MOVS     r1,#6
+00007a  4618              MOV      r0,r3
+00007c  f7fffffe          BL       OLED_ShowHexNum
+;;;33     	OLED_ShowHexNum(2, 9, ArrayWrite[2], 2);
+000080  481c              LDR      r0,|L1.244|
+000082  7882              LDRB     r2,[r0,#2]  ; ArrayWrite
+000084  2302              MOVS     r3,#2
+000086  2109              MOVS     r1,#9
+000088  4618              MOV      r0,r3
+00008a  f7fffffe          BL       OLED_ShowHexNum
+;;;34     	OLED_ShowHexNum(2, 12, ArrayWrite[3], 2);
+00008e  4819              LDR      r0,|L1.244|
+000090  78c2              LDRB     r2,[r0,#3]  ; ArrayWrite
+000092  2302              MOVS     r3,#2
+000094  210c              MOVS     r1,#0xc
+000096  4618              MOV      r0,r3
+000098  f7fffffe          BL       OLED_ShowHexNum
+;;;35     	
+;;;36     	OLED_ShowHexNum(3, 3, ArrayRead[0], 2);
+00009c  4816              LDR      r0,|L1.248|
+00009e  7802              LDRB     r2,[r0,#0]  ; ArrayRead
+0000a0  2302              MOVS     r3,#2
+0000a2  2103              MOVS     r1,#3
+0000a4  4608              MOV      r0,r1
+0000a6  f7fffffe          BL       OLED_ShowHexNum
+;;;37     	OLED_ShowHexNum(3, 6, ArrayRead[1], 2);
+0000aa  4813              LDR      r0,|L1.248|
+0000ac  7842              LDRB     r2,[r0,#1]  ; ArrayRead
+0000ae  2302              MOVS     r3,#2
+0000b0  2106              MOVS     r1,#6
+0000b2  2003              MOVS     r0,#3
+0000b4  f7fffffe          BL       OLED_ShowHexNum
+;;;38     	OLED_ShowHexNum(3, 9, ArrayRead[2], 2);
+0000b8  480f              LDR      r0,|L1.248|
+0000ba  7882              LDRB     r2,[r0,#2]  ; ArrayRead
+0000bc  2302              MOVS     r3,#2
+0000be  2109              MOVS     r1,#9
+0000c0  2003              MOVS     r0,#3
+0000c2  f7fffffe          BL       OLED_ShowHexNum
+;;;39     	OLED_ShowHexNum(3, 12, ArrayRead[3], 2);
+0000c6  480c              LDR      r0,|L1.248|
+0000c8  78c2              LDRB     r2,[r0,#3]  ; ArrayRead
+0000ca  2302              MOVS     r3,#2
+0000cc  210c              MOVS     r1,#0xc
+0000ce  2003              MOVS     r0,#3
+0000d0  f7fffffe          BL       OLED_ShowHexNum
+;;;40     	
+;;;41     	while (1)
+0000d4  bf00              NOP      
+                  |L1.214|
+0000d6  e7fe              B        |L1.214|
+;;;42     	{
+;;;43     		
+;;;44     	}
+;;;45     }
+;;;46     
                           ENDP
 
-                  |L1.40|
-000028  436f756e          DCB      "Count:",0
-00002c  743a00  
-00002f  00                DCB      0
+                  |L1.216|
+0000d8  4d49443a          DCB      "MID:   DID:",0
+0000dc  20202044
+0000e0  49443a00
+                  |L1.228|
+0000e4  573a00            DCB      "W:",0
+0000e7  00                DCB      0
+                  |L1.232|
+0000e8  523a00            DCB      "R:",0
+0000eb  00                DCB      0
+                  |L1.236|
+                          DCD      ||DID||
+                  |L1.240|
+                          DCD      MID
+                  |L1.244|
+                          DCD      ArrayWrite
+                  |L1.248|
+                          DCD      ArrayRead
+
+                          AREA ||.data||, DATA, ALIGN=1
+
+                  MID
+000000  0000              DCB      0x00,0x00
+                  ||DID||
+000002  0000              DCB      0x00,0x00
+                  ArrayWrite
+000004  01020304          DCB      0x01,0x02,0x03,0x04
+                  ArrayRead
+                          DCDU     0x00000000
 
                   __ARM_use_no_argv EQU 0

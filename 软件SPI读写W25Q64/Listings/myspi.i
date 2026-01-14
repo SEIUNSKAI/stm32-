@@ -1,4 +1,4 @@
-#line 1 "User\\main.c"
+#line 1 "Hardware\\MySPI.c"
 #line 1 ".\\start\\stm32f10x.h"
 
 
@@ -13337,89 +13337,67 @@ void SysTick_CLKSourceConfig(uint32_t SysTick_CLKSource);
  
 
  
-#line 2 "User\\main.c"
-#line 1 ".\\System\\Delay.h"
+#line 2 "Hardware\\MySPI.c"
 
 
-
-void Delay_us(uint32_t us);
-void Delay_ms(uint32_t ms);
-void Delay_s(uint32_t s);
-
-#line 3 "User\\main.c"
-#line 1 ".\\Hardware\\OLED.h"
-
-
-
-void OLED_Init(void);
-void OLED_Clear(void);
-void OLED_ShowChar(uint8_t Line, uint8_t Column, char Char);
-void OLED_ShowString(uint8_t Line, uint8_t Column, char *String);
-void OLED_ShowNum(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Length);
-void OLED_ShowSignedNum(uint8_t Line, uint8_t Column, int32_t Number, uint8_t Length);
-void OLED_ShowHexNum(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Length);
-void OLED_ShowBinNum(uint8_t Line, uint8_t Column, uint32_t Number, uint8_t Length);
-
-#line 4 "User\\main.c"
-#line 1 ".\\Hardware\\MySPI.h"
-#line 4 ".\\Hardware\\MySPI.h"
-
-void MySPI_Init(void);
-void SPI_Start(void);
-void SPI_Stop(void);
-uint8_t MySPI_SwapByte(uint8_t ByteSend);
-
-#line 5 "User\\main.c"
-#line 1 ".\\Hardware\\W25Q64.h"
-#line 4 ".\\Hardware\\W25Q64.h"
-
-void W25Q64_Init(void);
-void W25Q64_ReadID(uint8_t *MID, uint16_t *DID);
-void W25Q64_ENABLE(void);
-void W25Q64_WaitBusy(void);
-void W25Q64_PageProgram(uint32_t Address, uint8_t *DataArray, uint16_t count);
-void W25Q64_SectorErase(uint32_t Address);
-void W25Q64_ReadData(uint32_t Address, uint8_t *DataArray, uint32_t Count);
-
-#line 6 "User\\main.c"
-
-uint8_t MID;
-uint16_t DID;
-
-uint8_t ArrayWrite[] = {0x01, 0x02, 0x03, 0x04};
-uint8_t ArrayRead[4];
-
-int main(void)
+void MySPI_W_SS(uint8_t BitValue)
 {
-	OLED_Init();
-	W25Q64_Init();
+    GPIO_WriteBit(((GPIO_TypeDef *) ((((uint32_t)0x40000000) + 0x10000) + 0x0800)), ((uint16_t)0x0010), (BitAction)BitValue);
+}
+
+void MySPI_W_SCK(uint8_t BitValue)
+{
+    GPIO_WriteBit(((GPIO_TypeDef *) ((((uint32_t)0x40000000) + 0x10000) + 0x0800)), ((uint16_t)0x0020), (BitAction)BitValue);
+}
+
+void MySPI_W_MOSI(uint8_t BitValue)
+{
+    GPIO_WriteBit(((GPIO_TypeDef *) ((((uint32_t)0x40000000) + 0x10000) + 0x0800)), ((uint16_t)0x0080), (BitAction)BitValue);
+}
+
+uint8_t MySPI_R_MISO(void)
+{
+    return GPIO_ReadInputDataBit(((GPIO_TypeDef *) ((((uint32_t)0x40000000) + 0x10000) + 0x0800)), ((uint16_t)0x0040));
+}
+
+void MySPI_Init(void)
+{
+    RCC_APB2PeriphClockCmd(((uint32_t)0x00000004), ENABLE);
 	
-	OLED_ShowString(1, 1, "MID:   DID:");
-	OLED_ShowString(2, 1, "W:");
-	OLED_ShowString(3, 1, "R:");
-	
-	W25Q64_ReadID(&MID, &DID);
-	OLED_ShowHexNum(1, 5, MID, 2);
-	OLED_ShowHexNum(1, 12, DID, 4);
-	
-	W25Q64_SectorErase(0x000000);
-	W25Q64_PageProgram(0x000000, ArrayWrite, 4);
-	
-	W25Q64_ReadData(0x000000, ArrayRead, 4);
-	
-	OLED_ShowHexNum(2, 3, ArrayWrite[0], 2);
-	OLED_ShowHexNum(2, 6, ArrayWrite[1], 2);
-	OLED_ShowHexNum(2, 9, ArrayWrite[2], 2);
-	OLED_ShowHexNum(2, 12, ArrayWrite[3], 2);
-	
-	OLED_ShowHexNum(3, 3, ArrayRead[0], 2);
-	OLED_ShowHexNum(3, 6, ArrayRead[1], 2);
-	OLED_ShowHexNum(3, 9, ArrayRead[2], 2);
-	OLED_ShowHexNum(3, 12, ArrayRead[3], 2);
-	
-	while (1)
-	{
-		
-	}
+	GPIO_InitTypeDef GPIO_InitStructure;
+ 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Pin = ((uint16_t)0x0010) | ((uint16_t)0x0020) | ((uint16_t)0x0080);
+ 	GPIO_Init(((GPIO_TypeDef *) ((((uint32_t)0x40000000) + 0x10000) + 0x0800)), &GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Pin = ((uint16_t)0x0040);
+ 	GPIO_Init(((GPIO_TypeDef *) ((((uint32_t)0x40000000) + 0x10000) + 0x0800)), &GPIO_InitStructure);
+
+    MySPI_W_SS(1);
+    MySPI_W_SCK(0);
+}
+
+void SPI_Start(void)
+{
+    MySPI_W_SS(0);
+}
+
+void SPI_Stop(void)
+{
+    MySPI_W_SS(1);
+}
+
+uint8_t MySPI_SwapByte(uint8_t ByteSend)
+{
+    uint8_t i, ByteReceive = 0x00;
+    for(i = 0; i < 8; i ++)
+    {
+        MySPI_W_MOSI(ByteSend & (0x80 >> i));
+        MySPI_W_SCK(1);
+        if(MySPI_R_MISO() == 1){ByteReceive |= (0x80 >> i);}
+        MySPI_W_SCK(0);            
+    }
+    return ByteReceive;
 }
 
